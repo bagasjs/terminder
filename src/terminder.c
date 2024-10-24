@@ -105,12 +105,18 @@ void terminder_command_show(Terminder *tm, Args *args)
     tm->stmt = NULL;
 }
 
-// TODO(bagasjs): Adding a simpler way to define deadline
-// i.e. terminder add "Hello World" 
+void parse_deadline(char actual_deadline[24], const char *source)
+{
+}
+
 void terminder_command_add(Terminder *tm, Args *args)
 {
     const char *title = shift_args(args, "Expecting the title of the task");
     const char *deadline = shift_args(args, "Expecting the deadline of the task");
+    // terminder add "A task" 1Y1M1w1d1h1m1s -> if now = 2020-24-01 10:00:00:000
+    if(deadline[0] == '+') {
+
+    }
 
     const char *insert_task_sql = "INSERT INTO tasks (title, deadline) VALUES (?, ?);";
     if(sqlite3_prepare_v2(tm->db, insert_task_sql, -1, &tm->stmt, 0) != SQLITE_OK) {
@@ -232,5 +238,6 @@ int main(int argc, const char **argv)
 
 /// TODOS
 /// 1. Input validation
-/// 2. Deadline syntax parsing
+/// 2. Deadline syntax parsing i.e. 1d5m (1 day 5 minutes), (1M2w, 1 Month 2 Week)
 /// 3. Show command with some options for showing every tasks, pagination, etc
+/// 4. Determining the default location for the terminder.sqlite file

@@ -2,12 +2,21 @@ CC := clang
 CFLAGS := -Wall -Wextra -pedantic
 AR := llvm-ar
 
+
+ifeq ($(OS), Windows_NT)
+	LIBSQLITE  := sqlite3.lib
+	EXECUTABLE := terminder.exe
+else
+	LIBSQLITE  := libsqlite3.a
+	EXECUTABLE := terminder
+endif
+
 all: sqlite3.lib terminder.exe
 
-terminder.exe: src/terminder.c
+$(EXECUTABLE): src/terminder.c
 	$(CC) $(CFLAGS) -o $@ $^ -lsqlite3
 
-sqlite3.lib: sqlite3.o shell.o
+$(LIBSQLITE): sqlite3.o shell.o
 	$(AR) -rcs $@ $^
 
 shell.o: src/sqlite3/shell.c
