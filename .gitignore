@@ -1,0 +1,4 @@
+*.o
+*.lib
+*.exe
+terminder.sqlite3
