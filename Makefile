@@ -1,26 +1,34 @@
 CC := clang
 CFLAGS := -Wall -Wextra -pedantic
+LFLAGS := 
 AR := llvm-ar
 
+NDEBUG=n
+
+ifeq ($(NDEBUG), y)
+	CFLAGS += -DNDEBUG -O3
+endif
 
 ifeq ($(OS), Windows_NT)
 	LIBSQLITE  := sqlite3.lib
 	EXECUTABLE := terminder.exe
+	CFLAGS += -D_CRT_SECURE_NO_WARNINGS
+	LFLAGS += -lShlwapi
 else
 	LIBSQLITE  := libsqlite3.a
 	EXECUTABLE := terminder
 endif
 
-all: sqlite3.lib terminder.exe
+all: build/$(LIBSQLITE) build/$(EXECUTABLE)
 
-$(EXECUTABLE): src/terminder.c
-	$(CC) $(CFLAGS) -o $@ $^ -lsqlite3
+build/$(EXECUTABLE): src/terminder.c
+	$(CC) $(CFLAGS) -o $@ $^ -L build -lsqlite3 $(LFLAGS)
 
-$(LIBSQLITE): sqlite3.o shell.o
+build/$(LIBSQLITE): build/sqlite3.o build/shell.o
 	$(AR) -rcs $@ $^
 
-shell.o: src/sqlite3/shell.c
+build/shell.o: src/sqlite3/shell.c
 	$(CC) $(CFLAGS) -O3 -I src/sqlite3 -c -o $@ $^
 
-sqlite3.o: src/sqlite3/sqlite3.c
+build/sqlite3.o: src/sqlite3/sqlite3.c
 	$(CC) $(CFLAGS) -O3 -I src/sqlite3 -c -o $@ $^
