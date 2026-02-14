@@ -567,6 +567,10 @@ int main(int argc, char *argv[])
 {
     Terminder tmd;
     const char *root_dir  = "terminder_tasks";
+#ifdef NDEBUG
+    const char *home_dir = fs_get_home_dir(&tmp);
+    root_dir = fs_path_join(&tmp, home_dir, root_dir);
+#endif
 
     if(!tmd_must_init(&tmd, root_dir)) return false;
 

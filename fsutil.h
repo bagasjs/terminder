@@ -77,8 +77,8 @@ FsResult fs_delete_file(const char *path);
 
 FsFileType fs_get_file_type(const char *path);
 
-const char *fs_getcwd(FsTemp *temp);
-const char *fs_gethomedir(FsTemp *temp);
+const char *fs_get_cwd(FsTemp *temp);
+const char *fs_get_home_dir(FsTemp *temp);
 // This doesn't support the case where b = "./test" or b ="../test"
 const char *fs_path_join(FsTemp *temp, const char *a, const char *b);
 const char *fs_path_win32_to_posix(FsTemp *temp, const char *path);
@@ -179,6 +179,24 @@ const char *fs_path_posix_to_win32(FsTemp *temp, const char *path)
     return result;
 }
 
+const char *fs_path_win32_to_posix(FsTemp *temp, const char *path)
+{
+    size_t len = strlen(path);
+    size_t cap = len + 1;
+    char *result = fs_temp_alloc(temp, cap);
+    if(!result) return NULL;
+
+    for(size_t i = 0; i < len; ++i) {
+        if(path[i] == '\\') {
+            result[i] = '/';
+        } else {
+            result[i] = path[i];
+        }
+    }
+    result[cap-1] = 0;
+    return result;
+}
+
 #define FS_PATH_SEP '/'
 const char *fs_path_join(FsTemp *temp, const char *path_a, const char *path_b)
 {
@@ -215,11 +233,11 @@ typedef struct FsDirEntryWin32PrivateFields {
 int mkdir(const char *path, unsigned int stuff);
 #endif
 
-const char *fs_gethomedir(FsTemp *temp)
+const char *fs_get_home_dir(FsTemp *temp)
 {
 #ifdef _WIN32
     const char *home_path = getenv("HOMEPATH");
-    return fs_temp_strdup(temp, home_path);
+    return fs_path_win32_to_posix(temp, home_path);
 #else
 #error "Not implemented for this platform"
 #endif
