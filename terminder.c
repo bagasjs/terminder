@@ -409,6 +409,7 @@ bool tmd_must_init(Terminder *tmd, const char *tasks_dir)
 {
     memset(tmd, 0, sizeof(*tmd));
     tmd->tasks_dir = tasks_dir;
+    printf("Database: %s\n", tasks_dir);
 
     FsFileType file_type = fs_get_file_type(tasks_dir);
     switch(file_type) {
@@ -516,8 +517,9 @@ bool tmd_handle_new_task(Terminder *tmd, Args *args)
     fprintf(f, "status: \"\"\n");
     fprintf(f, "priority: 0\n");
     fprintf(f, "deadline: \"%s\"\n", deadline_str);
-    fprintf(f, "---\n");
-    fprintf(f, "\nAdd the description of your task here. You can use **markdown** syntax\n");
+    fprintf(f, "---\n\n");
+    fprintf(f, "Add the description of your task here. You can use **markdown** syntax\n");
+    fprintf(f, "Hey, you can also put related files into your task folder.\n");
     fclose(f);
 
     fprintf(stdout, "info: Created new task at %s\n", task_file);
@@ -525,14 +527,61 @@ bool tmd_handle_new_task(Terminder *tmd, Args *args)
     return true;
 }
 
+// parse this format YYYY-MM-DD hh:mm:ss
+bool parse_datetime(const char *source, Datetime *output)
+{
+    Parser parser = {0};
+    parser_init(&parser, NULL, source, strlen(source));
+    if(!parser_next_int(&parser)) return false;
+    output->year = parser.int_number;
+    if(!parser_get_and_expect_next_char(&parser, '-')) return false;
+    if(!parser_next_int(&parser)) return false;
+    output->month = parser.int_number;
+    if(!parser_get_and_expect_next_char(&parser, '-')) return false;
+    if(!parser_next_int(&parser)) return false;
+    output->day = parser.int_number;
+    if(!parser_get_and_expect_next_char(&parser, ' ')) return false;
+    if(!parser_next_int(&parser)) return false;
+    output->hour = parser.int_number;
+    if(!parser_get_and_expect_next_char(&parser, ':')) return false;
+    if(!parser_next_int(&parser)) return false;
+    output->minute = parser.int_number;
+    if(!parser_get_and_expect_next_char(&parser, ':')) return false;
+    if(!parser_next_int(&parser)) return false;
+    output->second = parser.int_number;
+    assert(parser.string_storage.items == NULL); // There must be no allocation occured
+    return true;
+}
+
 bool tmd_handle_ls(Terminder *tmd, Args *args)
 {
     (void)args;
     int i = 1;
+    printf("Tasks:\n");
     printf("    No | ID              | Deadline            | Title\n");
     printf("------------------------------------------------------\n");
+    Datetime now = datetime_now();
     for(Task *t = tmd->begin; t != NULL; t = t->next) {
-        printf("%5d. | %s | %s | %s\n", i, t->id, t->deadline, t->title);
+        Datetime deadline = {0};
+        if(!parse_datetime(t->deadline, &deadline)) return false;
+        if(datetime_cmp(deadline, now) > 0) {
+            printf("%5d. | %s | %s | %.*s\n", i, t->id, t->deadline, 30, t->title);
+        }
+        i += 1;
+    }
+    return true;
+}
+
+bool tmd_handle_ls_all(Terminder *tmd, Args *args)
+{
+    (void)args;
+    int i = 1;
+    printf("Tasks:\n");
+    printf("    No | ID              | Deadline            | Title\n");
+    printf("------------------------------------------------------\n");
+    Datetime now = datetime_now();
+    for(Task *t = tmd->begin; t != NULL; t = t->next) {
+        printf("%5d. | %s | %s | %.*s\n", i, t->id, t->deadline, 30, t->title);
         i += 1;
     }
     return true;
@@ -543,7 +592,8 @@ bool tmd_handle_help(Terminder *tmd, Args *args);
 
 static Subcommand subcommands[] = {
     { .name = "new-task",  .handler =  tmd_handle_new_task,  .help = "Create a new task" },
-    { .name = "ls",        .handler =  tmd_handle_ls,        .help = "Show the list of all tasks" },
+    { .name = "ls",        .handler =  tmd_handle_ls,        .help = "Show the list of all tasks to be done" },
+    { .name = "ls-all",    .handler =  tmd_handle_ls_all,    .help = "Show the list of all complete + incomplete tasks" },
     { .name = "help",      .handler =  tmd_handle_help,      .help = "Get this message" },
 };
 static size_t subcommands_count = sizeof(subcommands)/sizeof(subcommands[0]);
@@ -566,6 +616,10 @@ FsTemp tmp = { .buffer = buf, .capacity = sizeof(buf) };
 int main(int argc, char *argv[])
 {
     Terminder tmd;
+    Args args = { .count = argc, .items = (const char **)argv };
+    shift_args(&args, "Unreachable");
+    const char *subcommand = shift_args(&args, "Provide a subcommand. Look at `terminder help`");
+
     const char *root_dir  = "terminder_tasks";
 #ifdef NDEBUG
     const char *home_dir = fs_get_home_dir(&tmp);
@@ -573,10 +627,6 @@ int main(int argc, char *argv[])
 #endif
 
     if(!tmd_must_init(&tmd, root_dir)) return false;
-
-    Args args = { .count = argc, .items = (const char **)argv };
-    shift_args(&args, "Unreachable");
-    const char *subcommand = shift_args(&args, "Provide a subcommand. Look at `terminder help`");
     bool handled = false;
     int exit_code = 0;
     for(size_t i = 0; i < subcommands_count; ++i) {

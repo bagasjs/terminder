@@ -18,10 +18,10 @@ Datetime datetime_add(Datetime a, Datetime b);
 int datetime_get_max_days_in_month(int year, int month);
 // +1Y1M1w1d1h1m1s -> 0001-01-01 01:01:01
 bool datetime_parse_duration(const char *source, Datetime *dt);
+int datetime_cmp(Datetime a, Datetime b);
 
 #endif // DATETIME_H_
 
-#define DATETIME_IMPLEMENTATION
 #ifdef DATETIME_IMPLEMENTATION
 #include <time.h>
 
@@ -82,6 +82,23 @@ Datetime datetime_add(Datetime a, Datetime b)
         }
     }
     return result;
+}
+
+int datetime_cmp(Datetime a, Datetime b)
+{
+    int x = 0;
+    x = a.year - b.year;
+    if(x != 0) return x;
+    x = a.month - b.month;
+    if(x != 0) return x;
+    x = a.day - b.day;
+    if(x != 0) return x;
+    x = a.hour - b.hour;
+    if(x != 0) return x;
+    x = a.minute - b.minute;
+    if(x != 0) return x;
+    x = a.second - b.second;
+    return x;
 }
 
 bool datetime_parse_duration(const char *source, Datetime *dt)
