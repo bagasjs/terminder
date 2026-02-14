@@ -9,16 +9,9 @@ is to be done). Moreover it's also inspired by Tsoding's issue tracking system (
 ## USAGE
 - Recommendation
 It's recommended to run the terminder in your **.bashrc**, **.zshrc**, etc. Just like how you do with programs like neofetch
-- Adding TODOs
+- Look for the commands
 ```sh 
-terminder add -f todo.txt 
-```
-```sh 
-terminder add "Something" "2024-10-10 10:10:10"
-```
-```sh 
-// This will open default editor
-terminder add 
+terminder help
 ```
 
 ## INSTALATION
