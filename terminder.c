@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <string.h>
 #define SHTABLE_IMPLEMENTATION
 #include "shtable.h"
 
@@ -523,7 +524,7 @@ bool tmd_handle_new_task(Terminder *tmd, Args *args)
     fclose(f);
 
     fprintf(stdout, "info: Created new task at %s\n", task_file);
-
+    free(temp.buffer);
     return true;
 }
 
@@ -587,14 +588,57 @@ bool tmd_handle_ls_all(Terminder *tmd, Args *args)
     return true;
 }
 
+bool tmd_handle_open_dir(Terminder *tmd, Args *args)
+{
+    FsTemp temp = {0};
+    temp.capacity = 4 * 1024;
+    void *buf = malloc(temp.capacity);
+    temp.buffer = buf;
+
+    const char *id = shift_args(args, "Provide the id of the task: `terminder open-dir <id>`");
+    Task *task = shtable_get_or(&tmd->lookup, id, NULL);
+    if(task == NULL) {
+        ERRORF("There's no such task with id %s\n", id);
+        return false;
+    }
+    const char *path = fs_path_join(&temp, tmd->tasks_dir, task->id);
+
+    printf("INFO: opening task directory `%s`\n", path);
+    return true;
+}
+
+bool tmd_handle_edit(Terminder *tmd, Args *args)
+{
+    FsTemp temp = {0};
+    temp.capacity = 4 * 1024;
+    void *buf = malloc(temp.capacity);
+    temp.buffer = buf;
+
+    const char *id = shift_args(args, "Provide the id of the task: `terminder edit <id>`");
+    Task *task = shtable_get_or(&tmd->lookup, id, NULL);
+    if(task == NULL) {
+        ERRORF("There's no such task with id %s\n", id);
+        return false;
+    }
+    const char *path = tmd->tasks_dir;
+    path = fs_path_join(&temp, path, task->id);
+    path = fs_path_join(&temp, path, "TASK.md");
+
+    printf("INFO: opening task file `%s`\n", path);
+    return true;
+}
+
 
 bool tmd_handle_help(Terminder *tmd, Args *args);
 
 static Subcommand subcommands[] = {
+    { .name = "help",      .handler =  tmd_handle_help,      .help = "Get this message" },
     { .name = "new-task",  .handler =  tmd_handle_new_task,  .help = "Create a new task" },
     { .name = "ls",        .handler =  tmd_handle_ls,        .help = "Show the list of all tasks to be done" },
     { .name = "ls-all",    .handler =  tmd_handle_ls_all,    .help = "Show the list of all complete + incomplete tasks" },
-    { .name = "help",      .handler =  tmd_handle_help,      .help = "Get this message" },
+
+    { .name = "open-dir",  .handler =  tmd_handle_open_dir,  .help = "Open the task directory with default file explorer" },
+    { .name = "edit",      .handler =  tmd_handle_edit,      .help = "Open the task file with default text editor" },
 };
 static size_t subcommands_count = sizeof(subcommands)/sizeof(subcommands[0]);
 

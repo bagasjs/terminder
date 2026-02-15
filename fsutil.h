@@ -77,12 +77,12 @@ FsResult fs_delete_file(const char *path);
 
 FsFileType fs_get_file_type(const char *path);
 
+const char *fs_path_win32_to_posix(FsTemp *temp, const char *path);
+const char *fs_path_posix_to_win32(FsTemp *temp, const char *path);
 const char *fs_get_cwd(FsTemp *temp);
 const char *fs_get_home_dir(FsTemp *temp);
 // This doesn't support the case where b = "./test" or b ="../test"
 const char *fs_path_join(FsTemp *temp, const char *a, const char *b);
-const char *fs_path_win32_to_posix(FsTemp *temp, const char *path);
-const char *fs_path_posix_to_win32(FsTemp *temp, const char *path);
 const char *fs_getext(FsTemp *temp, const char *path);
 const char *fs_dirname(FsTemp *temp, const char *path);
 
@@ -232,6 +232,18 @@ typedef struct FsDirEntryWin32PrivateFields {
 // #include <sys/stat.h>
 int mkdir(const char *path, unsigned int stuff);
 #endif
+
+const char *fs_get_cwd(FsTemp *temp)
+{
+#ifdef _WIN32
+    DWORD cap = GetCurrentDirectory(0, NULL);
+    char *data = fs_temp_alloc(temp, cap + 1);
+    if(!data) return NULL;
+    DWORD length = GetCurrentDirectory(cap, data);
+    data[cap] = 0;
+    return fs_path_win32_to_posix(temp, data);
+#endif
+}
 
 const char *fs_get_home_dir(FsTemp *temp)
 {
