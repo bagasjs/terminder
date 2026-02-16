@@ -410,7 +410,6 @@ bool tmd_must_init(Terminder *tmd, const char *tasks_dir)
 {
     memset(tmd, 0, sizeof(*tmd));
     tmd->tasks_dir = tasks_dir;
-    printf("Database: %s\n", tasks_dir);
 
     FsFileType file_type = fs_get_file_type(tasks_dir);
     switch(file_type) {
@@ -628,6 +627,14 @@ bool tmd_handle_edit(Terminder *tmd, Args *args)
     return true;
 }
 
+bool tmd_handle_where(Terminder *tmd, Args *args)
+{
+    (void)tmd;
+    (void)args;
+    printf("Database: %s\n", tmd->tasks_dir);
+    return true;
+}
+
 
 bool tmd_handle_help(Terminder *tmd, Args *args);
 
@@ -636,6 +643,7 @@ static Subcommand subcommands[] = {
     { .name = "new-task",  .handler =  tmd_handle_new_task,  .help = "Create a new task" },
     { .name = "ls",        .handler =  tmd_handle_ls,        .help = "Show the list of all tasks to be done" },
     { .name = "ls-all",    .handler =  tmd_handle_ls_all,    .help = "Show the list of all complete + incomplete tasks" },
+    { .name = "where",     .handler =  tmd_handle_where,     .help = "Show the location of the tasks database directory" },
 
     { .name = "open-dir",  .handler =  tmd_handle_open_dir,  .help = "Open the task directory with default file explorer" },
     { .name = "edit",      .handler =  tmd_handle_edit,      .help = "Open the task file with default text editor" },
