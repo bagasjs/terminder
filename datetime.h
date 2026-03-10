@@ -23,6 +23,7 @@ int datetime_cmp(Datetime a, Datetime b);
 #endif // DATETIME_H_
 
 #ifdef DATETIME_IMPLEMENTATION
+#undef DATETIME_IMPLEMENTATION
 #include <time.h>
 
 Datetime datetime_now(void)

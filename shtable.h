@@ -153,7 +153,8 @@ shtable_entry_t *shtable__find_entry(shtable_t *T, const char *key)
         if(entry->state == SHTABLE_ENTRY_EMPTY) {
             return NULL;
         } else {
-            if(entry->key && strcmp(entry->key, key) == 0 && entry->state == SHTABLE_ENTRY_USED) {
+            bool is_key_equal = strcmp(entry->key, key) == 0;
+            if(entry->key && is_key_equal && entry->state == SHTABLE_ENTRY_USED) {
                 return entry;
             }
         }

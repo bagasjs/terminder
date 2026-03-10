@@ -3,8 +3,14 @@
    `fsutil.h` - filesystem utilities (platform: Windows, Linux)
 
     NOTES:
-    - Filepath must be POSIX path (including on Windows i.e. "/c/Program Files/Windows/"
+    - Unsafe
+    - Filepath must be POSIX path (including on Windows i.e. "/c/Program Files/Windows/")
     - Filepath only support ASCII character
+
+    Windows Only Notes:
+    - Root filepath in Windows must be the drive or the partition name i.e. "/c" or "/d" 
+      other than that it will be assumed as invalid file path.
+    - It doesn't handle UNC
 
 */
 #ifndef FSUTIL_H_
@@ -98,6 +104,7 @@ void fs_dir_entry_close(FsDirEntry *dir);
 #endif // FSUTIL_H_
 
 #ifdef FSUTIL_IMPLEMENTATION
+#undef FSUTIL_IMPLEMENTATION
 
 const char *fs_result_to_cstr(FsResult result)
 {
